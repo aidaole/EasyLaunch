@@ -53,7 +53,7 @@ class TaskC : Task {
         get() = "TaskC"
 
     override val dependencies: List<Class<out Task>>
-        get() = listOf(TaskD::class.java)
+        get() = listOf(TaskA::class.java)
 
     override suspend fun execute() {
         Log.d("SampleTask", "TaskC 开始执行")

@@ -70,7 +70,6 @@ internal class TaskScheduler {
         try {
             // 构建任务依赖关系
             taskGraph.buildDependencies()
-            
             // 初始化待执行任务队列
             pendingTasks.clear()
             pendingTasks.addAll(taskGraph.getRootNodes())

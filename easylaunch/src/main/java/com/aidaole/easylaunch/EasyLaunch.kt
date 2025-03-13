@@ -52,13 +52,15 @@ class EasyLaunch private constructor() {
     /**
      * 协程作用域
      */
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main + exceptionHandler)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     /**
      * 所有任务启动的开始时间
      */
     var startTime: Long = 0
-        private set(value) { field = value}
+        private set(value) {
+            field = value
+        }
 
     /**
      * 初始化
@@ -91,14 +93,10 @@ class EasyLaunch private constructor() {
      */
     fun start() {
         scope.launch {
-            try {
-                Log.d(TAG, "开始执行启动任务")
-                startTime = System.currentTimeMillis()
-                taskScheduler.start()
-                Log.d(TAG, "所有启动任务执行完成")
-            } catch (e: Exception) {
-                Log.e(TAG, "启动任务执行失败", e)
-            }
+            Log.d(TAG, "开始执行启动任务")
+            startTime = System.currentTimeMillis()
+            taskScheduler.start()
+            Log.d(TAG, "所有启动任务执行完成")
         }
     }
 
