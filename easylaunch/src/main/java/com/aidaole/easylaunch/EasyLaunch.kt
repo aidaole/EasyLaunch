@@ -2,6 +2,7 @@ package com.aidaole.easylaunch
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,13 +15,13 @@ import kotlinx.coroutines.launch
 class EasyLaunch private constructor() {
     companion object {
         private const val TAG = "EasyLaunch"
-        
+
         /**
          * 单例实例
          */
         @Volatile
         private var INSTANCE: EasyLaunch? = null
-        
+
         /**
          * 获取单例实例
          */
@@ -30,31 +31,44 @@ class EasyLaunch private constructor() {
             }
         }
     }
-    
+
     /**
      * 应用上下文
      */
     private lateinit var appContext: Context
-    
+
     /**
      * 任务调度器
      */
     private val taskScheduler = TaskScheduler()
-    
+
+    /**
+     * 启动过程中的异常捕获
+     */
+    private val exceptionHandler = CoroutineExceptionHandler { context, exception ->
+        Log.w(TAG, "启动过程中发生异常", exception)
+    }
+
     /**
      * 协程作用域
      */
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main + exceptionHandler)
+
+    /**
+     * 所有任务启动的开始时间
+     */
+    var startTime: Long = 0
+        private set(value) { field = value}
+
     /**
      * 初始化
      */
-    fun init(context: Context) : EasyLaunch {
+    fun init(context: Context): EasyLaunch {
         appContext = context.applicationContext
         Log.d(TAG, "EasyLaunch 初始化完成")
         return this
     }
-    
+
     /**
      * 添加任务
      */
@@ -62,7 +76,7 @@ class EasyLaunch private constructor() {
         taskScheduler.addTask(task)
         return this
     }
-    
+
     /**
      * 添加多个任务
      */
@@ -70,7 +84,7 @@ class EasyLaunch private constructor() {
         tasks.forEach { taskScheduler.addTask(it) }
         return this
     }
-    
+
     /**
      * 启动任务
      * 异步方式启动，不会阻塞调用线程
@@ -79,6 +93,7 @@ class EasyLaunch private constructor() {
         scope.launch {
             try {
                 Log.d(TAG, "开始执行启动任务")
+                startTime = System.currentTimeMillis()
                 taskScheduler.start()
                 Log.d(TAG, "所有启动任务执行完成")
             } catch (e: Exception) {
@@ -86,7 +101,7 @@ class EasyLaunch private constructor() {
             }
         }
     }
-    
+
     /**
      * 重置
      * 重置所有任务状态，但不清空任务
@@ -95,7 +110,7 @@ class EasyLaunch private constructor() {
         taskScheduler.reset()
         return this
     }
-    
+
     /**
      * 清空
      * 清空所有任务

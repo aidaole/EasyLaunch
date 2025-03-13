@@ -20,32 +20,32 @@ internal class TaskScheduler {
     companion object {
         private const val TAG = "TaskScheduler"
     }
-    
+
     /**
      * 任务图
      */
     private val taskGraph = TaskGraph()
-    
+
     /**
      * 协程作用域
      */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    
+
     /**
      * 是否正在运行
      */
     private val isRunning = AtomicBoolean(false)
-    
+
     /**
      * 待执行的任务队列
      */
     private val pendingTasks = ConcurrentLinkedQueue<TaskNode>()
-    
+
     /**
      * 正在执行的任务数量
      */
     private val runningTaskCount = AtomicInteger(0)
-    
+
     /**
      * 添加任务
      */
@@ -54,10 +54,10 @@ internal class TaskScheduler {
             Log.w(TAG, "任务调度器正在运行，无法添加任务")
             return
         }
-        
+
         taskGraph.addTask(task)
     }
-    
+
     /**
      * 启动任务调度器
      */
@@ -66,12 +66,12 @@ internal class TaskScheduler {
             Log.w(TAG, "任务调度器已经在运行")
             return
         }
-        
+
         try {
             // 初始化待执行任务队列
             pendingTasks.clear()
             pendingTasks.addAll(taskGraph.getRootNodes())
-            
+
             // 开始执行任务
             executeAllTasks()
         } finally {
@@ -79,7 +79,7 @@ internal class TaskScheduler {
             taskGraph.reset()
         }
     }
-    
+
     /**
      * 执行所有任务
      */
@@ -92,7 +92,7 @@ internal class TaskScheduler {
                 val task = pendingTasks.poll() ?: break
                 tasksToExecute.add(task)
             }
-            
+
             if (tasksToExecute.isEmpty()) {
                 // 如果没有可执行的任务，但还有正在执行的任务，等待一下
                 if (runningTaskCount.get() > 0) {
@@ -102,32 +102,32 @@ internal class TaskScheduler {
                 }
                 continue
             }
-            
+
             // 并行执行所有可执行的任务
             val deferreds = tasksToExecute.map { taskNode ->
                 scope.async {
                     executeTask(taskNode)
                 }
             }
-            
+
             // 等待所有任务执行完成
             deferreds.awaitAll()
         }
     }
-    
+
     /**
      * 执行单个任务
      */
     private suspend fun executeTask(taskNode: TaskNode) {
         val task = taskNode.task
-        
+
         try {
             // 更新任务状态
             taskNode.status = TaskStatus.RUNNING
             runningTaskCount.incrementAndGet()
-            
+
             Log.d(TAG, "开始执行任务: ${task.name}")
-            
+
             // 根据任务配置选择执行方式
             if (task.isAsync) {
                 // 异步任务，在指定的调度器上执行
@@ -140,11 +140,11 @@ internal class TaskScheduler {
                     task.execute()
                 }
             }
-            
+
             // 更新任务状态为已完成
             taskNode.status = TaskStatus.FINISHED
-            Log.d(TAG, "任务执行完成: ${task.name}")
-            
+            Log.d(TAG, "任务执行完成: ${task.name}. 开始总时长: ${(System.currentTimeMillis() - EasyLaunch.getInstance().startTime)}")
+
             // 将子任务加入待执行队列
             taskNode.children.forEach { childNode ->
                 if (childNode.isReady) {
@@ -159,7 +159,7 @@ internal class TaskScheduler {
             runningTaskCount.decrementAndGet()
         }
     }
-    
+
     /**
      * 重置任务调度器
      */
@@ -168,10 +168,10 @@ internal class TaskScheduler {
             Log.w(TAG, "任务调度器正在运行，无法重置")
             return
         }
-        
+
         taskGraph.reset()
     }
-    
+
     /**
      * 清空任务调度器
      */
@@ -180,7 +180,7 @@ internal class TaskScheduler {
             Log.w(TAG, "任务调度器正在运行，无法清空")
             return
         }
-        
+
         taskGraph.clear()
     }
 } 
