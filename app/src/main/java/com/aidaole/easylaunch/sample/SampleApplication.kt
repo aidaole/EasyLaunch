@@ -18,10 +18,7 @@ class SampleApplication : Application() {
 
         // 添加任务
         EasyLaunch.getInstance()
-            .addTask(TaskA())
-            .addTask(TaskB())
-            .addTask(TaskC())
-            .addTask(TaskD())
+            .addTasks(listOf(TaskD(), TaskA(), TaskB(), TaskC()))
             .start()
 
         Log.d("SampleApplication", "启动任务已添加并开始执行")

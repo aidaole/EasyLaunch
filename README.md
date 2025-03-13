@@ -7,6 +7,7 @@
 1. 使用有向无环图配置任务依赖关系, 并支持检查当前任务是否成环
 2. 支持main线程, 子线程同步初始化
 3. 使用协程实现, 轻量级
+4. 支持任务依赖的延迟解析，可以任意顺序添加任务
 
 ## 使用方法
 
@@ -69,11 +70,12 @@ class YourApplication : Application() {
         // 初始化EasyLaunch
         EasyLaunch.getInstance().init(this)
         
-        // 添加任务
+        // 添加任务 - 可以任意顺序添加
         EasyLaunch.getInstance()
-            .addTask(TaskA())
-            .addTask(TaskB())
-            .addTask(TaskC())
+            .addTask(TaskD()) // 依赖TaskB和TaskC
+            .addTask(TaskB()) // 依赖TaskA
+            .addTask(TaskC()) // 依赖TaskA
+            .addTask(TaskA()) // 没有依赖
             .start()
     }
 }

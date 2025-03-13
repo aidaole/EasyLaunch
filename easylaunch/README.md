@@ -7,6 +7,7 @@
 1. 使用有向无环图配置任务依赖关系, 并支持检查当前任务是否成环
 2. 支持main线程, 子线程同步初始化
 3. 使用协程实现, 轻量级
+4. 支持任务依赖的延迟解析，可以任意顺序添加任务
 
 ## 使用方法
 
@@ -106,6 +107,8 @@ class TaskC : Task {
 }
 ```
 
+**注意**：EasyLaunch支持任意顺序添加任务，依赖关系会在启动时自动构建。如果依赖的任务不存在，会在日志中输出警告信息，但不会阻止其他任务的执行。
+
 ### 5. 主线程和子线程任务
 
 EasyLaunch支持在主线程和子线程执行任务，通过`isAsync`属性来指定：
@@ -204,12 +207,12 @@ class MyApplication : Application() {
         // 初始化EasyLaunch
         EasyLaunch.getInstance().init(this)
         
-        // 添加任务
+        // 添加任务 - 可以任意顺序添加
         EasyLaunch.getInstance()
-            .addTask(TaskA())
-            .addTask(TaskB())
-            .addTask(TaskC())
-            .addTask(TaskD())
+            .addTask(TaskD()) // 依赖TaskB和TaskC
+            .addTask(TaskB()) // 依赖TaskA
+            .addTask(TaskC()) // 依赖TaskA
+            .addTask(TaskA()) // 没有依赖
             .start()
     }
 }
@@ -243,8 +246,9 @@ EasyLaunch.getInstance().clear()
 ## 注意事项
 
 1. 任务依赖关系不能形成环，否则会抛出异常
-2. 在添加任务时，确保依赖的任务已经添加到EasyLaunch中
-3. start()方法是异步的，不会阻塞调用线程
+2. 任务可以任意顺序添加，依赖关系会在启动时自动构建
+3. 如果依赖的任务不存在，会在日志中输出警告信息，但不会阻止其他任务的执行
+4. start()方法是异步的，不会阻塞调用线程
 
 ## 许可证
 
