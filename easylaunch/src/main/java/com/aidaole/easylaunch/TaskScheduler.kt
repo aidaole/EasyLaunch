@@ -50,6 +50,11 @@ internal class TaskScheduler {
      * 任务完成回调
      */
     private var taskCompletionCallback: ((Task) -> Unit)? = null
+    
+    /**
+     * 任务执行时间记录
+     */
+    private val taskExecutionTimes = mutableMapOf<String, Long>()
 
     /**
      * 添加任务
@@ -87,6 +92,9 @@ internal class TaskScheduler {
         }
 
         try {
+            // 清空任务执行时间记录
+            taskExecutionTimes.clear()
+            
             // 构建任务依赖关系
             taskGraph.buildDependencies()
             
@@ -96,6 +104,9 @@ internal class TaskScheduler {
 
             // 开始执行任务
             executeAllTasks()
+            
+            // 打印所有任务执行时间
+            printTaskExecutionTimes()
         } finally {
             isRunning.set(false)
             taskGraph.reset()
@@ -142,6 +153,7 @@ internal class TaskScheduler {
      */
     private suspend fun executeTask(taskNode: TaskNode) {
         val task = taskNode.task
+        val taskStartTime = System.currentTimeMillis()
 
         try {
             // 更新任务状态
@@ -163,9 +175,14 @@ internal class TaskScheduler {
                 }
             }
 
+            // 计算任务执行时间
+            val taskEndTime = System.currentTimeMillis()
+            val executionTime = taskEndTime - taskStartTime
+            taskExecutionTimes[task.name] = executionTime
+            
             // 更新任务状态为已完成
             taskNode.status = TaskStatus.FINISHED
-            Log.d(TAG, "任务执行完成: ${task.name}. 开始总时长: ${(System.currentTimeMillis() - EasyLaunch.getInstance().startTime)}")
+            Log.d(TAG, "任务执行完成: ${task.name}, 执行时长: ${executionTime}ms, 开始总时长: ${(taskEndTime - EasyLaunch.getInstance().startTime)}ms")
             
             // 调用任务完成回调
             taskCompletionCallback?.invoke(task)
@@ -184,6 +201,31 @@ internal class TaskScheduler {
             runningTaskCount.decrementAndGet()
         }
     }
+    
+    /**
+     * 打印所有任务执行时间
+     */
+    private fun printTaskExecutionTimes() {
+        if (taskExecutionTimes.isEmpty()) {
+            return
+        }
+        
+        val totalTime = taskExecutionTimes.values.sum()
+        val sortedTasks = taskExecutionTimes.entries.sortedByDescending { it.value }
+        
+        val sb = StringBuilder()
+        sb.appendLine("======== 任务执行时间统计 ========")
+        sb.appendLine("总执行时间: ${totalTime}ms")
+        sb.appendLine("各任务执行时间:")
+        
+        sortedTasks.forEachIndexed { index, entry ->
+            val percentage = String.format("%.1f", entry.value * 100.0 / totalTime)
+            sb.appendLine("${index + 1}. ${entry.key}: ${entry.value}ms (${percentage}%)")
+        }
+        
+        sb.appendLine("================================")
+        Log.i(TAG, sb.toString())
+    }
 
     /**
      * 重置任务调度器
@@ -195,6 +237,7 @@ internal class TaskScheduler {
         }
 
         taskGraph.reset()
+        taskExecutionTimes.clear()
     }
 
     /**
@@ -207,5 +250,6 @@ internal class TaskScheduler {
         }
 
         taskGraph.clear()
+        taskExecutionTimes.clear()
     }
 } 
