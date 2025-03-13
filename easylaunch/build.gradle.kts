@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("maven-publish")
 }
 
 android {
@@ -27,6 +28,13 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 dependencies {
@@ -41,4 +49,45 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                
+                groupId = "com.github.aidaole"
+                artifactId = "easylaunch"
+                version = "1.0.0"
+                
+                pom {
+                    name.set("EasyLaunch")
+                    description.set("Android启动框架，用于优化应用启动速度")
+                    url.set("https://github.com/aidaole/EasyLaunch")
+                    
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    
+                    developers {
+                        developer {
+                            id.set("aidaole")
+                            name.set("aidaole")
+                            email.set("aidaole@outlook.com")
+                        }
+                    }
+                    
+                    scm {
+                        connection.set("scm:git:github.com/aidaole/EasyLaunch.git")
+                        developerConnection.set("scm:git:ssh://github.com/aidaole/EasyLaunch.git")
+                        url.set("https://github.com/aidaole/EasyLaunch/tree/main")
+                    }
+                }
+            }
+        }
+    }
 }
