@@ -8,6 +8,7 @@
 2. 支持main线程, 子线程同步初始化
 3. 使用协程实现, 轻量级
 4. 支持任务依赖的延迟解析，可以任意顺序添加任务
+5. 支持任务完成监听，可以在特定任务完成后执行特定操作
 
 ## 使用方法
 
@@ -79,6 +80,38 @@ class YourApplication : Application() {
             .start()
     }
 }
+```
+
+### 4. 等待任务完成
+
+如果需要等待某些任务完成后再执行某些操作，可以使用任务完成监听：
+
+```kotlin
+// 监听单个任务完成
+EasyLaunch.getInstance()
+    .addTaskCompletedListener(TaskB::class.java) {
+        // 当TaskB完成时执行
+        Log.d("Sample", "TaskB已完成，可以执行特定操作")
+    }
+    .start()
+
+// 监听多个任务完成
+EasyLaunch.getInstance()
+    .addTasksCompletedListener(listOf(TaskB::class.java, TaskC::class.java)) {
+        // 当TaskB和TaskC都完成时执行
+        Log.d("Sample", "TaskB和TaskC都已完成，可以执行特定操作")
+    }
+    .start()
+
+// 监听所有任务完成
+EasyLaunch.getInstance()
+    .addAllTasksCompletedListener {
+        // 当所有任务完成时执行
+        Log.d("Sample", "所有任务已完成，可以跳转到主界面")
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
+    }
+    .start()
 ```
 
 更多详细信息请查看 [EasyLaunch模块README](easylaunch/README.md)。

@@ -8,6 +8,7 @@
 2. 支持main线程, 子线程同步初始化
 3. 使用协程实现, 轻量级
 4. 支持任务依赖的延迟解析，可以任意顺序添加任务
+5. 支持任务完成监听，可以在特定任务完成后执行特定操作
 
 ## 使用方法
 
@@ -77,11 +78,12 @@ class YourApplication : Application() {
         // 初始化EasyLaunch
         EasyLaunch.getInstance().init(this)
         
-        // 添加任务
+        // 添加任务 - 可以任意顺序添加
         EasyLaunch.getInstance()
-            .addTask(TaskA())
-            .addTask(TaskB())
-            .addTask(TaskC())
+            .addTask(TaskD()) // 依赖TaskB和TaskC
+            .addTask(TaskB()) // 依赖TaskA
+            .addTask(TaskC()) // 依赖TaskA
+            .addTask(TaskA()) // 没有依赖
             .start()
     }
 }
@@ -141,6 +143,55 @@ class SyncTask : Task {
 }
 ```
 
+### 6. 任务完成监听
+
+EasyLaunch支持在任务完成时执行回调，可以用于在特定任务完成后执行特定操作，如跳转到主界面：
+
+```kotlin
+// 监听单个任务完成
+EasyLaunch.getInstance()
+    .addTaskCompletedListener(TaskB::class.java) {
+        // 当TaskB完成时执行
+        Log.d("Sample", "TaskB已完成，可以执行特定操作")
+    }
+    .start()
+
+// 监听多个任务完成
+EasyLaunch.getInstance()
+    .addTasksCompletedListener(listOf(TaskB::class.java, TaskC::class.java)) {
+        // 当TaskB和TaskC都完成时执行
+        Log.d("Sample", "TaskB和TaskC都已完成，可以执行特定操作")
+    }
+    .start()
+
+// 监听所有任务完成
+EasyLaunch.getInstance()
+    .addAllTasksCompletedListener {
+        // 当所有任务完成时执行
+        Log.d("Sample", "所有任务已完成，可以跳转到主界面")
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
+    }
+    .start()
+```
+
+### 7. 检查任务是否已完成
+
+EasyLaunch提供了方法来检查任务是否已完成：
+
+```kotlin
+// 检查特定任务是否已完成
+val isTaskBCompleted = EasyLaunch.getInstance().isTaskCompleted(TaskB::class.java)
+
+// 检查多个任务是否已完成
+val areTasksBCCompleted = EasyLaunch.getInstance().areTasksCompleted(
+    listOf(TaskB::class.java, TaskC::class.java)
+)
+
+// 检查所有任务是否已完成
+val areAllTasksCompleted = EasyLaunch.getInstance().areAllTasksCompleted()
+```
+
 ## 示例
 
 以下是一个完整的示例，展示如何使用EasyLaunch框架：
@@ -198,11 +249,11 @@ class TaskD : Task {
     }
 }
 
-// 在Application中初始化
-class MyApplication : Application() {
+// 在Activity中使用
+class MainActivity : AppCompatActivity() {
     
-    override fun onCreate() {
-        super.onCreate()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         
         // 初始化EasyLaunch
         EasyLaunch.getInstance().init(this)
@@ -213,7 +264,34 @@ class MyApplication : Application() {
             .addTask(TaskB()) // 依赖TaskA
             .addTask(TaskC()) // 依赖TaskA
             .addTask(TaskA()) // 没有依赖
+            
+            // 添加任务完成监听器
+            .addTaskCompletedListener(TaskB::class.java) {
+                // 当TaskB完成时执行
+                Log.d("MainActivity", "TaskB已完成，可以初始化UI")
+                // 初始化UI
+                runOnUiThread {
+                    setContentView(R.layout.activity_main)
+                }
+            }
+            
+            // 添加所有任务完成监听器
+            .addAllTasksCompletedListener {
+                // 当所有任务完成时执行
+                Log.d("MainActivity", "所有任务已完成，可以更新UI状态")
+                // 更新UI状态
+                runOnUiThread {
+                    updateUIAfterAllTasksCompleted()
+                }
+            }
+            
+            // 启动任务
             .start()
+    }
+    
+    private fun updateUIAfterAllTasksCompleted() {
+        // 更新UI状态
+        Log.d("MainActivity", "所有任务已完成，更新UI状态")
     }
 }
 ```
@@ -223,6 +301,8 @@ class MyApplication : Application() {
 1. 首先执行TaskA
 2. TaskA执行完成后，并行执行TaskB和TaskC
 3. TaskB和TaskC都执行完成后，执行TaskD
+4. 当TaskB完成时，会执行TaskB的完成回调，初始化UI
+5. 当所有任务完成时，会执行所有任务的完成回调，更新UI状态
 
 ## 高级用法
 
@@ -243,12 +323,62 @@ EasyLaunch.getInstance().reset()
 EasyLaunch.getInstance().clear()
 ```
 
+### 3. 在Activity中使用任务完成监听
+
+```kotlin
+class SampleActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // 初始化EasyLaunch
+        EasyLaunch.getInstance().init(applicationContext)
+        
+        // 添加任务
+        EasyLaunch.getInstance()
+            .addTask(TaskA())
+            .addTask(TaskB())
+            .addTask(TaskC())
+            .addTask(TaskD())
+            
+            // 添加任务完成监听器
+            .addTaskCompletedListener(TaskB::class.java) {
+                // 当TaskB完成时执行
+                Log.d("SampleActivity", "TaskB已完成，可以初始化UI")
+                // 初始化UI
+                runOnUiThread {
+                    setContentView(R.layout.activity_main)
+                }
+            }
+            
+            // 添加所有任务完成监听器
+            .addAllTasksCompletedListener {
+                // 当所有任务完成时执行
+                Log.d("SampleActivity", "所有任务已完成，可以更新UI状态")
+                // 更新UI状态
+                runOnUiThread {
+                    updateUIAfterAllTasksCompleted()
+                }
+            }
+            
+            // 启动任务
+            .start()
+    }
+    
+    private fun updateUIAfterAllTasksCompleted() {
+        // 更新UI状态
+        Log.d("SampleActivity", "所有任务已完成，更新UI状态")
+    }
+}
+```
+
 ## 注意事项
 
 1. 任务依赖关系不能形成环，否则会抛出异常
 2. 任务可以任意顺序添加，依赖关系会在启动时自动构建
 3. 如果依赖的任务不存在，会在日志中输出警告信息，但不会阻止其他任务的执行
 4. start()方法是异步的，不会阻塞调用线程
+5. 任务完成监听器可以用于在特定任务完成后执行特定操作，如初始化UI或跳转到主界面
 
 ## 许可证
 

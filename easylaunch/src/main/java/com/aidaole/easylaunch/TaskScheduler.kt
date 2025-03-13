@@ -45,6 +45,11 @@ internal class TaskScheduler {
      * 正在执行的任务数量
      */
     private val runningTaskCount = AtomicInteger(0)
+    
+    /**
+     * 任务完成回调
+     */
+    private var taskCompletionCallback: ((Task) -> Unit)? = null
 
     /**
      * 添加任务
@@ -56,6 +61,20 @@ internal class TaskScheduler {
         }
 
         taskGraph.addTask(task)
+    }
+    
+    /**
+     * 设置任务完成回调
+     */
+    fun setTaskCompletionCallback(callback: (Task) -> Unit) {
+        this.taskCompletionCallback = callback
+    }
+    
+    /**
+     * 获取所有任务
+     */
+    fun getAllTasks(): List<Class<out Task>> {
+        return taskGraph.getAllNodes().map { it.task.javaClass }
     }
 
     /**
@@ -70,6 +89,7 @@ internal class TaskScheduler {
         try {
             // 构建任务依赖关系
             taskGraph.buildDependencies()
+            
             // 初始化待执行任务队列
             pendingTasks.clear()
             pendingTasks.addAll(taskGraph.getRootNodes())
@@ -146,6 +166,9 @@ internal class TaskScheduler {
             // 更新任务状态为已完成
             taskNode.status = TaskStatus.FINISHED
             Log.d(TAG, "任务执行完成: ${task.name}. 开始总时长: ${(System.currentTimeMillis() - EasyLaunch.getInstance().startTime)}")
+            
+            // 调用任务完成回调
+            taskCompletionCallback?.invoke(task)
 
             // 将子任务加入待执行队列
             taskNode.children.forEach { childNode ->
