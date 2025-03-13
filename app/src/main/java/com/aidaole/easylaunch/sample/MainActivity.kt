@@ -1,4 +1,4 @@
-package com.aidaole.easylaunch
+package com.aidaole.easylaunch.sample
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
