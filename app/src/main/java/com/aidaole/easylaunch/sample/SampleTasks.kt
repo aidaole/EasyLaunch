@@ -18,8 +18,7 @@ class TaskA : Task {
 
     override suspend fun execute() {
         Log.d("SampleTask", "TaskA 开始执行")
-//        delay(500) // 模拟耗时操作
-        fibonacci(42)
+        fibonacci(40)
         Log.d("SampleTask", "TaskA 执行完成")
     }
 }
@@ -32,12 +31,8 @@ class TaskB : Task {
     override val name: String
         get() = "TaskB"
 
-    override val dependencies: List<Class<out Task>>
-        get() = listOf(TaskA::class.java)
-
     override suspend fun execute() {
         Log.d("SampleTask", "TaskB 开始执行")
-//        delay(300) // 模拟耗时操作
         Thread.sleep(300)
         Log.d("SampleTask", "TaskB 执行完成")
     }
@@ -53,7 +48,7 @@ class TaskC : Task {
         get() = "TaskC"
 
     override val dependencies: List<Class<out Task>>
-        get() = listOf(TaskA::class.java)
+        get() = listOf(TaskB::class.java)
 
     override suspend fun execute() {
         Log.d("SampleTask", "TaskC 开始执行")
@@ -71,7 +66,7 @@ class TaskD : Task {
         get() = "TaskD"
 
     override val dependencies: List<Class<out Task>>
-        get() = listOf(TaskB::class.java, TaskC::class.java)
+        get() = listOf(TaskA::class.java, TaskC::class.java)
 
     override val isAsync: Boolean
         get() = false // 在主线程执行

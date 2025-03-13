@@ -215,7 +215,8 @@ internal class TaskScheduler {
         
         val sb = StringBuilder()
         sb.appendLine("======== 任务执行时间统计 ========")
-        sb.appendLine("总执行时间: ${totalTime}ms")
+        sb.appendLine("所有任务合并执行时长: ${System.currentTimeMillis() - EasyLaunch.getInstance().startTime}ms")
+        sb.appendLine("所有任务总时长: ${totalTime}ms")
         sb.appendLine("各任务执行时间:")
         
         sortedTasks.forEachIndexed { index, entry ->

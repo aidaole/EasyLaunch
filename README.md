@@ -1,5 +1,7 @@
 # EasyLaunch
 
+[![](https://jitpack.io/v/aidaole/EasyLaunch.svg)](https://jitpack.io/#aidaole/EasyLaunch)
+
 这是一个Android的启动开源框架, 用于在启动过程中将任务并行, 达到优化启动速度的目的.
 
 框架特点:
@@ -10,6 +12,47 @@
 4. 支持任务依赖的延迟解析，可以任意顺序添加任务
 5. 支持任务完成监听，可以在特定任务完成后执行特定操作
 
+## 执行效果
+
+如项目中app的配置方案执行:
+TaskA (执行递归fibonacci(40)模拟阻塞耗时操作), 异步, 无依赖
+TaskB (执行Thread.sleep(300)), 异步, 无依赖
+TaskC (执行delay(200)), 异步, 依赖B
+TaskD (执行delay(100)), 同步主线程, 依赖 A, C
+
+可以看到日志后方总结:
+所有任务总时长是 1343, 但是实际执行时长是 1051. 因为任务 A,B 时并行执行的
+
+```logcatfilter
+启动任务已添加并开始执行
+Application.onCreate() 继续执行
+开始执行启动任务
+开始执行任务: TaskA
+开始执行任务: TaskB
+TaskA 开始执行
+TaskB 开始执行
+任务执行完成: TaskB, 执行时长: 302ms, 开始总时长: 310ms
+MainActivity onCreate: 
+任务执行完成: TaskA, 执行时长: 739ms, 开始总时长: 746ms
+开始执行任务: TaskC
+TaskC 开始执行
+任务执行完成: TaskC, 执行时长: 201ms, 开始总时长: 948ms
+开始执行任务: TaskD
+TaskD 开始执行（主线程）
+任务执行完成: TaskD, 执行时长: 101ms, 开始总时长: 1050ms
+======== 任务执行时间统计 ========
+所有任务合并执行时长: 1051ms
+所有任务总时长: 1343ms
+各任务执行时间:
+1. TaskA: 739ms (55.0%)
+2. TaskB: 302ms (22.5%)
+3. TaskC: 201ms (15.0%)
+4. TaskD: 101ms (7.5%)
+================================
+所有启动任务执行完成
+
+```
+
 ## 使用方法
 
 ### 1. 添加依赖
@@ -19,7 +62,7 @@
 ```groovy
 allprojects {
     repositories {
-        ...
+        // ...
         maven { url 'https://jitpack.io' }
     }
 }
@@ -29,7 +72,7 @@ allprojects {
 
 ```groovy
 dependencies {
-    implementation 'com.github.aidaole:EasyLaunch:1.0.0'
+    implementation 'com.github.aidaole:EasyLaunch:[最新版本]'
 }
 ```
 
