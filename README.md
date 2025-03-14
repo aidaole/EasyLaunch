@@ -2,6 +2,10 @@
 
 [![](https://jitpack.io/v/aidaole/EasyLaunch.svg)](https://jitpack.io/#aidaole/EasyLaunch)
 
+<div>
+    <img src="./images/easylaucnlogo.png" width="300">
+</div>
+
 这是一个Android的启动开源框架, 用于在启动过程中将任务并行, 达到优化启动速度的目的.
 
 框架特点:
